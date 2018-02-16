@@ -1,0 +1,43 @@
+.modal-backdrop {
+    opacity: 0.5 !important;
+}
+
+.fa-close {
+    font-size: 1.5em;
+}
+
+.spinnerContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#userMenu {
+    margin-left: auto;
+}
+
+.dropdown-menu-right {
+    left: auto;
+    right: 0px;
+}
+
+form {
+    padding: 0 1.5rem 0 1.5rem;
+}
+
+.modal.show .modal-dialog {
+    overflow: hidden;
+}
+
+#accordion .fa-caret-down {
+    display: none;
+}
+
+#accordion .collapsed .fa-caret-up {
+    display: none;
+}
+
+#accordion .collapsed .fa-caret-down {
+    display: inline;
+}

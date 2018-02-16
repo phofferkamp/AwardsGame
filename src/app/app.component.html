@@ -1,0 +1,503 @@
+<div class="modal fade" bsModal #loginModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true" [config]="{ignoreBackdropClick: true, keyboard: false}" (keyup.enter)="login()" (onHidden)="onModalHide()">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Login</h4>
+      </div>
+      <div class="modal-body">
+        <form #loginForm="ngForm">
+          <div class="form-group">
+            <label for="username">Username or email</label>
+            <input required type="text" class="form-control" id="username" placeholder="Enter username or email" name="username" autocapitalize="off" autocorrect="off" spellcheck="false" [(ngModel)]="loginName" #loginUsernameValidation="ngModel">
+          </div>
+          <div *ngIf="loginUsernameValidation.invalid && (loginUsernameValidation.dirty || loginUsernameValidation.touched)">
+            <small class="form-text text-danger" *ngIf="loginUsernameValidation.errors.required">
+              Please enter your username or email.
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input required type="password" class="form-control" id="password" placeholder="Enter password" name="password" [(ngModel)]="loginPassword" #loginPasswordValidation="ngModel">
+          </div>
+          <div *ngIf="loginPasswordValidation.invalid && (loginPasswordValidation.dirty || loginPasswordValidation.touched)">
+            <small class="form-text text-danger" *ngIf="loginPasswordValidation.errors.required">
+              Please enter your password.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidLogin">
+            The username/password combination is invalid.
+          </small>
+          <small class="form-text">
+            <a href="#" (click)="hideModal(loginModal, forgotModal)">Forgot your password? Click here.</a>
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="hideModal(loginModal, createAccountModal)">Create account</button>
+        <button type="button" [class]="loginForm.invalid ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="loginForm.invalid" (click)="login()">Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #createAccountModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true" [config]="{ignoreBackdropClick: true, keyboard: false}" (onHidden)="onModalHide()">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Create account</h4>
+      </div>
+      <div class="modal-body">
+        <form #createUserForm="ngForm">
+          <div class="form-group">
+            <label for="createUsername">Username (16 character limit)</label>
+            <input required pattern="[a-zA-Z0-9-_.!~*'()]*" maxlength="16" type="text" class="form-control" id="createUsername" placeholder="Enter username" name="createUsername" autocapitalize="off" autocorrect="off" spellcheck="false" [(ngModel)]="createUsername" #createUsernameValidation="ngModel"
+              (ngModelChange)="usernameChange(createUsername)">
+          </div>
+          <div *ngIf="createUsernameValidation.invalid && (createUsernameValidation.dirty || createUsernameValidation.touched)">
+            <small class="form-text text-danger" *ngIf="createUsernameValidation.errors.required">
+              Please enter a username.
+            </small>
+            <small class="form-text text-danger" *ngIf="createUsernameValidation.errors.pattern">
+              Please only use letters, numbers, and/or - _ . ! ~ * ' ( )
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="usernameExists">
+            The username you chose is already in use. Please choose another.
+          </small>
+          <div class="form-group">
+            <label for="createEmail">Email</label>
+            <input required email type="email" class="form-control" id="createEmail" placeholder="Enter a valid email for password recovery purposes" name="createEmail" autocapitalize="off" autocorrect="off" spellcheck="false" [(ngModel)]="createEmail" #createEmailValidation="ngModel"
+              (ngModelChange)="emailChange(createEmail)">
+          </div>
+          <div *ngIf="(createEmailValidation.valid || (!createEmailValidation.dirty && !createEmailValidation.touched)) && !emailExists">
+            <small class="form-text">
+              Please note that this is only for password recovery purposes.
+            </small>
+          </div>
+          <div *ngIf="createEmailValidation.invalid && (createEmailValidation.dirty || createEmailValidation.touched)">
+            <small class="form-text text-danger" *ngIf="createEmailValidation.errors.required || createEmailValidation.errors.email">
+              Please enter a valid email for password recovery purposes.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="emailExists">
+            The email you chose is already in use. Please choose another.
+          </small>
+          <div class="form-group">
+            <label for="createPassword">Password</label>
+            <input required type="password" class="form-control" id="createPassword" placeholder="Enter password" name="createPassword" [(ngModel)]="createPassword" #createPasswordValidation="ngModel">
+          </div>
+          <div *ngIf="createPasswordValidation.invalid && (createPasswordValidation.dirty || createPasswordValidation.touched)">
+            <small class="form-text text-danger" *ngIf="createPasswordValidation.errors.required">
+              Please enter a password.
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm password</label>
+            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password" name="confirmPassword" [(ngModel)]="confirmPassword" #confirmPasswordValidation="ngModel">
+          </div>
+          <div *ngIf="confirmPasswordValidation.dirty || confirmPasswordValidation.touched">
+            <small class="form-text text-danger" *ngIf="createPasswordValidation.valid && createPassword != confirmPassword">
+              The passwords do not match.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidCreateUser">
+            Something went wrong. Please attempt to create your account again.
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <re-captcha #captchaRef size="invisible" badge="bottomleft" (captchaResponse)="createAccount($event)" site_key="{{ siteKey }}"></re-captcha>
+        <button type="button" class="btn btn-outline-primary" (click)="hideModal(createAccountModal, loginModal)">Login</button>
+        <button type="button" [class]="createUserForm.invalid || createPassword != confirmPassword || usernameExists || createUserSubmitted ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="createUserForm.invalid || createPassword != confirmPassword || usernameExists || createUserSubmitted"
+          (click)="captchaRef.execute()">Create account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #forgotModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true" [config]="{ignoreBackdropClick: true, keyboard: false}" (onHidden)="onModalHide()">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Forgot password</h4>
+      </div>
+      <div class="modal-body">
+        <p>Forgot your password? No worries. Just enter your email address and we'll take care of it.</p>
+        <form #forgotForm="ngForm">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input required email type="email" class="form-control" id="email" placeholder="Enter your email and we will send you reset instructions" name="email" autocapitalize="off" autocorrect="off" spellcheck="false" [(ngModel)]="forgotEmail" #forgotEmailValidation="ngModel">
+          </div>
+          <div *ngIf="forgotEmailValidation.invalid && (forgotEmailValidation.dirty || forgotEmailValidation.touched)">
+            <small class="form-text text-danger" *ngIf="forgotEmailValidation.errors.required || forgotEmailValidation.errors.email">
+              Please enter your email.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidForgot">
+            Something went wrong. Please try again.
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <re-captcha #forgotCaptchaRef size="invisible" badge="bottomleft" (captchaResponse)="submitForgot($event)" site_key="{{ siteKey }}"></re-captcha>
+        <button type="button" class="btn btn-outline-primary" (click)="hideModal(forgotModal, loginModal)">Login</button>
+        <button type="button" [class]="forgotForm.invalid || forgotSubmitted ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="forgotForm.invalid || forgotSubmitted" (click)="forgotCaptchaRef.execute()">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #forgotSubmittedModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true" [config]="{ignoreBackdropClick: true, keyboard: false}" (onHidden)="onModalHide()">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Password change requested</h4>
+      </div>
+      <div class="modal-body">
+        <p>An email confirming your password change request has been sent to the email address provided. You must click the link provided in the email to complete the password change process.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="hideModal(forgotSubmittedModal, loginModal)">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #forgotConfirmedModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true" [config]="{ignoreBackdropClick: true, keyboard: false}" (onHidden)="onModalHide()">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Password sent</h4>
+      </div>
+      <div class="modal-body">
+        <p>An email containing your new password has been sent to the email address provided.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="hideModal(forgotConfirmedModal, loginModal)">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #changePasswordModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Change Password</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="changePasswordModal.hide()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form #changePasswordForm="ngForm">
+          <div class="form-group">
+            <label for="passwordChangeTo">New Password</label>
+            <input required type="password" class="form-control" id="passwordChangeTo" placeholder="Enter new password" name="passwordChangeTo" [(ngModel)]="passwordChangeTo" #passwordChangeToValidation="ngModel">
+          </div>
+          <div *ngIf="passwordChangeToValidation.invalid && (passwordChangeToValidation.dirty || passwordChangeToValidation.touched)">
+            <small class="form-text text-danger" *ngIf="passwordChangeToValidation.errors.required">
+              Please enter a new password.
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="confirmPasswordChangeTo">Confirm new password</label>
+            <input type="password" class="form-control" id="confirmPasswordChangeTo" placeholder="Confirm new password" name="confirmPasswordChangeTo" [(ngModel)]="confirmPasswordChangeTo" #confirmPasswordChangeToValidation="ngModel">
+          </div>
+          <div *ngIf="confirmPasswordChangeToValidation.dirty || confirmPasswordChangeToValidation.touched">
+            <small class="form-text text-danger" *ngIf="passwordChangeToValidation.valid && passwordChangeTo != confirmPasswordChangeTo">
+              The passwords do not match.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidCreateUser">
+            Something went wrong. Please attempt to change your password again.
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="changePasswordModal.hide()">Cancel</button>
+        <button type="button" [class]="changePasswordForm.invalid || passwordChangeTo != confirmPasswordChangeTo || changePasswordSubmitted ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="changePasswordForm.invalid || passwordChangeTo != confirmPasswordChangeTo || changePasswordSubmitted"
+          (click)="changePassword()">Change</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #passwordChangedModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Password changed</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="passwordChangedModal.hide()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Your password has been successfully changed.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="passwordChangedModal.hide()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #helpModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Help</h4>
+      </div>
+      <div class="modal-body">
+        <form #helpForm="ngForm">
+          <div class="form-group">
+            <label for="help">Need help? Our trusty staff will respond to your inquiry as soon as possible.</label>
+            <textarea required class="form-control" id="help" rows="3" name="help" placeholder="Please describe in detail the issue you are experiencing" [(ngModel)]="helpText" #helpValidation="ngModel"></textarea>
+          </div>
+          <div *ngIf="helpValidation.invalid && (helpValidation.dirty || helpValidation.touched)">
+            <small class="form-text text-danger" *ngIf="helpValidation.errors.required">
+              Please enter a description of the issue.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidHelp">
+            Something went wrong. Please try again.
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <re-captcha #helpCaptchaRef size="invisible" badge="bottomleft" (captchaResponse)="submitHelp($event)" site_key="{{ siteKey }}"></re-captcha>
+        <button type="button" class="btn btn-outline-primary" (click)="helpModal.hide()">Cancel</button>
+        <button type="button" [class]="helpForm.invalid || helpSubmitted ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="helpForm.invalid || helpSubmitted" (click)="helpCaptchaRef.execute()">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #helpConfirmedModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Help sent</h4>
+      </div>
+      <div class="modal-body">
+        <p>Your help request has been successfully sent.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="helpConfirmedModal.hide()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #feedbackModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Send Feedback</h4>
+      </div>
+      <div class="modal-body">
+        <form #feedbackForm="ngForm">
+          <div class="form-group">
+            <label for="feedback">Have a suggestion or complaint? We are all ears!</label>
+            <textarea required class="form-control" id="feedback" rows="3" name="help" placeholder="Let us know how we're doing" [(ngModel)]="feedbackText" #feedbackValidation="ngModel"></textarea>
+          </div>
+          <div *ngIf="feedbackValidation.invalid && (feedbackValidation.dirty || feedbackValidation.touched)">
+            <small class="form-text text-danger" *ngIf="feedbackValidation.errors.required">
+              Please enter your feedback.
+            </small>
+          </div>
+          <small class="form-text text-danger" *ngIf="invalidFeedback">
+            Something went wrong. Please try again.
+          </small>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <re-captcha #feedbackCaptchaRef size="invisible" badge="bottomleft" (captchaResponse)="submitFeedback($event)" site_key="{{ siteKey }}"></re-captcha>
+        <button type="button" class="btn btn-outline-primary" (click)="feedbackModal.hide()">Cancel</button>
+        <button type="button" [class]="feedbackForm.invalid || feedbackSubmitted ? 'btn btn-secondary' : 'btn btn-primary'" [disabled]="feedbackForm.invalid || feedbackSubmitted" (click)="feedbackCaptchaRef.execute()">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #feedbackConfirmedModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Feedback sent</h4>
+      </div>
+      <div class="modal-body">
+        <p>Your feedback has been successfully sent. Thanks!</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="feedbackConfirmedModal.hide()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #aboutModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">About</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="aboutModal.hide()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Developed by Paul</p>
+        <p>Special thanks to Bre <i class="fa fa-heart" aria-hidden="true" style="color:red;"></i></p>
+        <p><i class="fa fa-copyright" aria-hidden="true"></i> 2018 hoodieSoft</p>
+        <p><img src="assets/logo.png" width="30" height="30" class="d-inline-block align-top" alt=""></p>
+        <p>Academy Awards® and Oscars® are the registered trademarks of Academy of Motion Picture Arts and Sciences</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="aboutModal.hide()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #errorModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Error processing pick</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="errorModal.hide()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Sorry, there was an error processing your pick. It is possible that the event has already begun. Please reload the page and try again.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="errorModal.hide()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="reloadPage()">Reload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" bsModal #leaderboardModal="bs-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Leaderboard</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="leaderboardModal.hide()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="list-group">
+          <div class="list-group-item flex-column align-items-start" *ngFor="let game of games" [class.bg-success]="game.score >= highScore && game.score > 0" [class.text-white]="game.score >= highScore && game.score > 0">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ game.name }}</h5>
+              <small>{{ game.score }} {{ game.score == 1 ? 'point' : 'points' }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="leaderboardModal.hide()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="loading">
+  <div class="spinnerContainer">
+    <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+    <span class="sr-only">Loading...</span>
+  </div>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="navbar-brand">
+    Academy Awards Predictions
+  </div>
+  <div id="userMenu" class="btn-group" *ngIf="user.name">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <i class="fa fa-user" aria-hidden="true"></i>&nbsp; {{ user.name }}
+    </button>
+    <div class="dropdown-menu dropdown-menu-right">
+      <button class="dropdown-item" type="button" (click)="changePasswordModal.show()">Change Password</button>
+      <div class="dropdown-divider"></div>
+      <button class="dropdown-item" type="button" (click)="aboutModal.show()">About</button>
+      <button class="dropdown-item" type="button" (click)="feedbackModal.show()">Send Feedback</button>
+      <button class="dropdown-item" type="button" (click)="helpModal.show()">Help</button>
+      <button class="dropdown-item" type="button" (click)="logOut()">Log Out</button>
+    </div>
+  </div>
+</nav>
+<div>
+  <div *ngIf="user.name">
+    <div class="jumbotron" *ngIf="config.gameMode === 'before'">
+      <h1 class="display-3">{{ countdown }}</h1>
+      <p class="lead">The 90th Academy Awards begin on {{ gameStart }}. Choose your picks before the cutoff.</p>
+      <p>Come back after the Oscars have started to see how you and others scored!</p>
+    </div>
+
+    <div class="jumbotron" *ngIf="config.gameMode === 'during'">
+      <h1 class="display-3">Oscars Time</h1>
+      <p class="lead">The 90th Academy Awards began on Sunday, January 7 at 8pm ET.</p>
+      <hr class="my-4">
+      <p>Your score: {{ user.score }} out of {{ total }}</p>
+      <p>See how you and others scored by clicking the Leaderboard button!</p>
+      <p class="lead">
+        <a class="btn btn-primary btn-lg" href="#" role="button" (click)="leaderboardModal.show()">Leaderboard</a>
+      </p>
+    </div>
+
+    <div class="jumbotron" *ngIf="config.gameMode === 'after'">
+      <h1 class="display-3" *ngIf="user.score < highScore">Better luck next time!</h1>
+      <h1 class="display-3" *ngIf="user.score == highScore">You win!</h1>
+      <p class="lead">The 90th Academy Awards has concluded.</p>
+      <hr class="my-4">
+      <p>Your score: {{ user.score }} out of {{ total }}</p>
+      <p>See how you and others scored by clicking the Leaderboard button!</p>
+      <p class="lead">
+        <a class="btn btn-primary btn-lg" href="#" role="button" (click)="leaderboardModal.show()">Leaderboard</a>
+      </p>
+    </div>
+  </div>
+
+  <form *ngIf="categories.length > 0">
+    <div class="form-group row">
+      <div id="accordion" role="tablist" class="col-12">
+        <div class="card" *ngFor="let category of categories; let categoryIndex = index">
+          <div class="card-header" role="tab" id="heading{{ categoryIndex }}">
+            <h5 class="mb-0">
+              <a data-toggle="collapse" href="#collapse{{ categoryIndex }}" aria-expanded="true">
+              <i class="fa fa-caret-up" aria-hidden="true"></i><i class="fa fa-caret-down" aria-hidden="true"></i> {{ category.title }}
+            </a>
+            </h5>
+          </div>
+
+          <div id="collapse{{ categoryIndex }}" class="collapse show" role="tabpanel">
+            <div class="card-body" *ngFor="let nominee of category.nominees; let nomineeIndex = index" [class.bg-success]="nomineeIndex == category.nomineeSelected" [class.text-white]="nomineeIndex == category.nomineeSelected" [class.bg-light]="(config.gameMode === 'during' || config.gameMode === 'after') && nomineeIndex != category.nomineeSelected"
+              [class.bg-danger]="(config.gameMode === 'during' || config.gameMode === 'after') && category.winner > -1 && nomineeIndex == category.nomineeSelected && nomineeIndex != category.winner" (click)="save(category, nomineeIndex)">
+              {{ nominee }}
+              <i class="fa fa-check-circle fa-close close" aria-hidden="true" *ngIf="(config.gameMode === 'during' || config.gameMode === 'after') && nomineeIndex == category.winner"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <nav class="navbar fixed-bottom navbar-dark bg-success" *ngIf="savedFooter">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-link active">
+        Saved
+      </li>
+    </ul>
+  </nav>
+
+  <nav class="navbar fixed-bottom navbar-dark bg-danger" *ngIf="saveErrorFooter">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-link active">
+        Error in saving pick. Please try again.
+      </li>
+    </ul>
+  </nav>
+</div>
